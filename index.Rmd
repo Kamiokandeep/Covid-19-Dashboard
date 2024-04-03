@@ -1,0 +1,1014 @@
+---
+  title: "Coronavirus en Colombia (Covid-19)"
+  output:
+    flexdashboard::flex_dashboard:
+      css: css/css.css
+      theme: bootstrap
+      favicon: img/favicon.png
+      vertical_layout: scroll
+      orientation: rows
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(plotly) #Gráficas
+library(dplyr) #Data manipulación
+library(leaflet) #Mapa
+```
+
+Casos en Colombia
+===================================== 
+
+Column {data-width=1280}
+-------------------------------------
+
+###
+
+<div class="contenedor">
+<img src="img/img.jpg" class="img-fluid" alt="Responsive image">
+<img src="img/pv_logo.png" class="float-left-principal-icon" alt="Responsive image">
+<div class="titulo"> <p>Reporte de Casos en Colombia<p> </div>
+<div class="titulo-sub-titulo"> <p>Coronavirus (Covid-19)<p> </div>
+</div>
+
+```{r, fig.width=10, fig.height=4}
+
+```
+
+Column {data-width=100}
+-------------------------------------
+
+### Casos confirmados
+
+```{r, fig.width=2, fig.height=4, echo=FALSE}
+data <- readRDS("staying/CasosConfirmados.rds") %>% 
+  select(Casos_Text)
+valueBox(data, color = "#ffffff")
+```
+
+### Casos recuperados
+
+```{r, fig.width=2, fig.height=4, echo=FALSE}
+data <- readRDS("staying/CasosRecuperados.rds") %>% 
+  select(Recuperados_Text)
+valueBox(data, color = "#ffffff")
+```
+
+### Fallecidos
+
+```{r, fig.width=2, fig.height=4, echo=FALSE}
+data <- readRDS("staying/CasosFallecidos.rds") %>% 
+  select(Fallecidos_Text)
+valueBox(data, color = "#ffffff")
+```
+
+### Casos activos
+
+```{r, fig.width=2, fig.height=4, echo=FALSE}
+Casos <- readRDS("staying/CasosConfirmados.rds") %>% 
+  select(Casos)
+Recuperados <- readRDS("staying/CasosRecuperados.rds") %>% 
+  select(Recuperados)
+Fallecidos <- readRDS("staying/CasosFallecidos.rds") %>% 
+  select(Fallecidos)
+data <- (Casos) - (Recuperados + Fallecidos)
+
+data <- data %>% 
+  mutate(a = substring(Casos, 1, 1)) %>% 
+  mutate(b = substring(Casos, 2, 2)) %>% 
+  mutate(c = substring(Casos, 3, 3)) %>% 
+  mutate(d = substring(Casos, 4, 4)) %>% 
+  mutate(e = substring(Casos, 5, 5)) %>% 
+  mutate(Casos_Text = paste0(a, b, ".", c, d, e)) %>% 
+  select(Casos_Text)
+valueBox(data, color = "#ffffff")
+```
+
+Column {data-width=1280}
+-------------------------------------
+   
+### Casos por día
+
+```{r, fig.width=6, fig.height=5, echo=FALSE}
+#Gráfica de Barras
+HistoricoDeCasos <- readRDS("staying/HistoricoDeCasos.rds") %>% 
+  mutate(labels = as.character(labels)) %>% 
+  rename(Total = Freq)
+CasosNuevos <- readRDS("staying/CasosNuevos.rds") %>% 
+  mutate(labels = as.character(labels)) %>% 
+  rename(Nuevos = Freq) %>% 
+  filter(Nuevos > 0) %>% 
+  arrange(M)
+data <- left_join(CasosNuevos, HistoricoDeCasos, by = "labels") 
+data$labels <- factor(data$labels, levels = data[["labels"]])
+
+fig <- plot_ly(data)
+fig <- fig %>% 
+  add_trace(x = ~labels, y = ~Nuevos, type = 'bar', 
+            name = 'Casos nuevos por día',
+            marker = list(color = '#F26666',
+                           line = list(color = '#FFFFFF', width = 1)),
+            hoverinfo = "text",
+            text = ~Nuevos, textposition = 'outside')
+fig <- fig %>% 
+  layout(yaxis = list(range = c(0, 10000))) %>% 
+  layout(title = '', xaxis = list(title = ""),
+         yaxis = list(side = 'left', title = '', showgrid = FALSE, zeroline = FALSE),
+         yaxis2 = list(side = 'right', overlaying = "y", title = '', showgrid = FALSE, zeroline = FALSE))
+fig <- fig %>% 
+  layout(legend = list(x = 0.1, y = 0.9))
+fig
+```
+ 
+Column {data-width=1280}
+-------------------------------------
+
+### Casos acumulados por día
+
+```{r, fig.width=6, fig.height=5, echo=FALSE}
+#Gráfica de Línea
+HistoricoDeCasos <- readRDS("staying/HistoricoDeCasos.rds") %>% 
+  mutate(labels = as.character(labels)) %>% 
+  rename(Total = Freq)
+CasosNuevos <- readRDS("staying/CasosNuevos.rds") %>% 
+  mutate(labels = as.character(labels)) %>% 
+  rename(Nuevos = Freq) %>% 
+  filter(Nuevos > 0) %>% 
+  arrange(M)
+data <- left_join(CasosNuevos, HistoricoDeCasos, by = "labels") 
+data$labels <- factor(data$labels, levels = data[["labels"]])
+
+fig <- plot_ly(data)
+fig <- fig %>% 
+  add_trace(x = ~labels, y = ~Total, type = 'scatter', mode = 'lines', 
+            name = 'Casos acumulados por día',
+            marker = list(color = '#F29F05',
+                           line = list(color = '#FFFFFF', width = 0)),
+            line = list(color = '#F29F05'),
+            hoverinfo = "text",
+            text = ~Total, textposition = 'auto')
+fig <- fig %>% 
+  layout(yaxis = list(range = c(0, 260000))) %>% 
+  layout(title = '', xaxis = list(title = ""),
+         yaxis = list(side = 'left', title = '', showgrid = FALSE, zeroline = FALSE),
+         yaxis2 = list(side = 'right', overlaying = "y", title = '', showgrid = FALSE, zeroline = FALSE))
+fig <- fig %>% 
+  layout(legend = list(x = 0.1, y = 0.9))
+fig
+```
+
+Column {data-width=1280}
+-------------------------------------
+
+### Género
+
+```{r, fig.width=6, fig.height=5, echo=FALSE}
+# Pie
+data <- readRDS("staying/Gender.rds")
+fig <- plot_ly(data, labels = ~labels, values = ~Freq,
+        marker = list(colors = c('#F29F05', '#F26666'), line = list(color = '#FFFFFF', width = 1))) %>%        
+        add_pie(hole = 0.6)
+fig
+```
+
+### Lugar de atención
+
+```{r, fig.width=6, fig.height=5, echo=FALSE}
+# Pie
+data <- readRDS("staying/LugarAtención.rds")
+fig <- plot_ly(data, labels = ~labels, values = ~Freq,
+        marker = list(colors = c('#D9663D', '#A64029', '#8C2920'), line = list(color = '#FFFFFF', width = 1))) %>% 
+        add_pie(hole = 0.6)
+fig
+```
+
+Column {data-width=1280}
+-------------------------------------
+
+### Rango de edad
+
+```{r, fig.width=6, fig.height=5, echo=FALSE}
+#Gráficas de Barras
+data <- readRDS("staying/RangoEdad.rds")
+data$labels <- factor(data$labels, levels = data[["labels"]])
+
+fig <- plot_ly(data, x = ~labels, y = ~Freq, type = "bar", 
+             text = ~Freq, textposition = 'outside',
+             marker = list(color = "#049DBF",
+                           line = list(color = '#FFFFFF', width = 1))) %>% 
+  layout(yaxis = list(range = c(0, 60000))) %>% 
+  layout(title = "",
+    xaxis = list(title = ""),
+    yaxis = list(title = ""))
+fig
+```
+
+Column {data-width=1000}
+-------------------------------------
+
+<p><strong> Última Actualización: </strong> `r Sys.time()` Fuente: <a href="https://www.ins.gov.co/Paginas/Inicio.aspx" target="_blank">Instituto Nacional de Salud</a> Nota: Este sitio web y sus contenidos se proporcionan al público con fines informativos. Se prohíbe el uso del sitio web con fines comerciales. Copyright 2020 <a href="https://peoplesvoice.co/" target="_blank">People’s Voice S.A.S. </a>
+
+
+
+
+
+
+
+
+
+
+Casos por departamento
+===================================== 
+
+Column {data-width=450}
+-------------------------------------
+
+###
+
+```{r, fig.width=6, fig.height=5.3, echo=FALSE}
+# Mapa
+data <- readRDS("staying/DataMaps.rds")
+m <- leaflet(data) %>% 
+  addTiles() %>%
+  addProviderTiles(providers$CartoDB.Positron) %>% 
+  addCircles(lng = ~Longitud, 
+             lat = ~Latitud, 
+             color = "#A60F0F", 
+             weight = 1, 
+             radius = ~sqrt(Casos) * 500, 
+             popup = ~popup)
+m
+```
+
+###
+
+```{r, fig.width=6, fig.height=5, echo=FALSE}
+# Tabla
+data <- readRDS("staying/DataTable.rds" )
+knitr::kable(data)
+```
+
+
+
+
+
+
+
+
+
+
+Casos por ciudad o municipio
+===================================== 
+
+Column {data-width=450}
+-------------------------------------
+
+###
+
+```{r, fig.width=6, fig.height=5, echo=FALSE}
+# Tabla 1
+data <- readRDS("staying/Data_Table_Ciudad.rds")
+data <- data %>% 
+  mutate(id = rep(1:nrow(data))) %>% 
+  select(id, Ciudad, Casos, Recuperados, Fallecidos)
+data <- data[1:300, ]
+knitr::kable(data)
+```
+
+###
+
+```{r, fig.width=6, fig.height=5, echo=FALSE}
+# Tabla 2
+data <- readRDS("staying/Data_Table_Ciudad.rds")
+data <- data %>% 
+  mutate(id = rep(1:nrow(data))) %>% 
+  select(Ciudad, Casos, Recuperados, Fallecidos)
+data <- data[301:600, ]
+knitr::kable(data)
+```
+
+###
+
+```{r, fig.width=6, fig.height=5, echo=FALSE}
+# Tabla 3
+data <- readRDS("staying/Data_Table_Ciudad.rds")
+data <- data %>% 
+  mutate(id = rep(1:nrow(data))) %>% 
+  select(Ciudad, Casos, Recuperados, Fallecidos)
+data <- data[601:nrow(data), ]
+knitr::kable(data)
+```
+
+
+
+
+
+
+
+
+
+
+Hospitalizados en UCI {data-navmenu="Lugar de atención"}
+=====================================
+
+Column {data-width=1280}
+-------------------------------------
+   
+### Hospitalizados en UCI - Casos por día
+
+```{r, fig.width=6, fig.height=5, echo=FALSE}
+#Gráfica de Barras
+HistoricoDeCasos <- readRDS("staying/HistoricoDeCasosHospitalizadasUCI.rds") %>% 
+  mutate(labels = as.character(labels)) %>% 
+  rename(Total = Freq)
+CasosNuevos <- readRDS("staying/CasosNuevosHospitalizadasUCI.rds") %>% 
+  mutate(labels = as.character(labels)) %>% 
+  rename(Nuevos = Freq) %>% 
+  filter(Nuevos > 0) %>% 
+  arrange(M)
+data <- left_join(CasosNuevos, HistoricoDeCasos, by = "labels") 
+data$labels <- factor(data$labels, levels = data[["labels"]])
+
+fig <- plot_ly(data)
+fig <- fig %>% 
+  add_trace(x = ~labels, y = ~Nuevos, type = 'bar', 
+            name = 'Casos nuevos por día',
+            marker = list(color = '#F26666',
+                           line = list(color = '#FFFFFF', width = 1)),
+            hoverinfo = "text",
+            text = ~Nuevos, textposition = 'outside')
+fig <- fig %>% 
+  layout(yaxis = list(range = c(0, 100))) %>% 
+  layout(title = '', xaxis = list(title = ""),
+         yaxis = list(side = 'left', title = '', showgrid = FALSE, zeroline = FALSE),
+         yaxis2 = list(side = 'right', overlaying = "y", title = '', showgrid = FALSE, zeroline = FALSE))
+fig <- fig %>% 
+  layout(legend = list(x = 0.1, y = 0.9))
+fig
+```
+ 
+Column {data-width=1280}
+-------------------------------------
+
+### Hospitalizados en UCI - Casos acumulados por día
+
+```{r, fig.width=6, fig.height=5, echo=FALSE}
+#Gráfica de Línea
+HistoricoDeCasos <- readRDS("staying/HistoricoDeCasosHospitalizadasUCI.rds") %>% 
+  mutate(labels = as.character(labels)) %>% 
+  rename(Total = Freq)
+CasosNuevos <- readRDS("staying/CasosNuevosHospitalizadasUCI.rds") %>% 
+  mutate(labels = as.character(labels)) %>% 
+  rename(Nuevos = Freq) %>% 
+  filter(Nuevos > 0) %>% 
+  arrange(M)
+data <- left_join(CasosNuevos, HistoricoDeCasos, by = "labels") 
+data$labels <- factor(data$labels, levels = data[["labels"]])
+
+fig <- plot_ly(data)
+fig <- fig %>% 
+  add_trace(x = ~labels, y = ~Total, type = 'scatter', mode = 'lines', 
+            name = 'Casos acumulados por día',
+            marker = list(color = '#F29F05',
+                           line = list(color = '#FFFFFF', width = 0)),
+            line = list(color = '#F29F05'),
+            hoverinfo = "text",
+            text = ~Total, textposition = 'auto')
+fig <- fig %>% 
+  layout(yaxis = list(range = c(0, 2000))) %>% 
+  layout(title = '', xaxis = list(title = ""),
+         yaxis = list(side = 'left', title = '', showgrid = FALSE, zeroline = FALSE),
+         yaxis2 = list(side = 'right', overlaying = "y", title = '', showgrid = FALSE, zeroline = FALSE))
+fig <- fig %>% 
+  layout(legend = list(x = 0.1, y = 0.9))
+fig
+```
+
+Column {data-width=1280}
+-------------------------------------
+
+### Hospitalizados en UCI - Género
+
+```{r, fig.width=6, fig.height=5, echo=FALSE}
+# Pie
+data <- readRDS("staying/GenderHospitalizadasUCI.rds")
+fig <- plot_ly(data, labels = ~labels, values = ~Freq,
+        marker = list(colors = c('#F29F05', '#F26666'), line = list(color = '#FFFFFF', width = 1))) %>%        
+        add_pie(hole = 0.6)
+fig
+```
+
+
+### Hospitalizados en UCI - Rango de edad
+
+```{r, fig.width=6, fig.height=5, echo=FALSE}
+#Gráficas de Barras
+data <- readRDS("staying/RangoEdadHospitalizadasUCI.rds")
+data$labels <- factor(data$labels, levels = data[["labels"]])
+
+fig <- plot_ly(data, x = ~labels, y = ~Freq, type = "bar", 
+             text = ~Freq, textposition = 'outside',
+             marker = list(color = "#049DBF",
+                           line = list(color = '#FFFFFF', width = 1))) %>% 
+  layout(yaxis = list(range = c(0, 1000))) %>% 
+  layout(title = "",
+    xaxis = list(title = ""),
+    yaxis = list(title = ""))
+fig
+```
+
+Column {data-width=1280}
+-------------------------------------
+
+### Hospitalizados en UCI - Uso de camas en UCI por Cuidad / Municipio
+
+```{r, fig.width=6, fig.height=5, echo=FALSE}
+# Tabla
+data <- readRDS("staying/Data_Table_Camas_UCI.rds" )
+knitr::kable(data)
+```
+
+
+
+
+
+
+
+
+
+
+Hospitalizados {data-navmenu="Lugar de atención"}
+=====================================
+
+Column {data-width=1280}
+-------------------------------------
+   
+### Hospitalizados - Casos por día
+
+```{r, fig.width=6, fig.height=5, echo=FALSE}
+#Gráfica de Barras
+HistoricoDeCasos <- readRDS("staying/HistoricoDeCasosHospitalizadas.rds") %>% 
+  mutate(labels = as.character(labels)) %>% 
+  rename(Total = Freq)
+CasosNuevos <- readRDS("staying/CasosNuevosHospitalizadas.rds") %>% 
+  mutate(labels = as.character(labels)) %>% 
+  rename(Nuevos = Freq) %>% 
+  filter(Nuevos > 0) %>% 
+  arrange(M)
+data <- left_join(CasosNuevos, HistoricoDeCasos, by = "labels") 
+data$labels <- factor(data$labels, levels = data[["labels"]])
+
+fig <- plot_ly(data)
+fig <- fig %>% 
+  add_trace(x = ~labels, y = ~Nuevos, type = 'bar', 
+            name = 'Casos nuevos por día',
+            marker = list(color = '#F26666',
+                           line = list(color = '#FFFFFF', width = 1)),
+            hoverinfo = "text",
+            text = ~Nuevos, textposition = 'outside')
+fig <- fig %>% 
+  layout(yaxis = list(range = c(0, 1000))) %>% 
+  layout(title = '', xaxis = list(title = ""),
+         yaxis = list(side = 'left', title = '', showgrid = FALSE, zeroline = FALSE),
+         yaxis2 = list(side = 'right', overlaying = "y", title = '', showgrid = FALSE, zeroline = FALSE))
+fig <- fig %>% 
+  layout(legend = list(x = 0.1, y = 0.9))
+fig
+```
+ 
+Column {data-width=1280}
+-------------------------------------
+
+### Hospitalizados - Casos acumulados por día
+
+```{r, fig.width=6, fig.height=5, echo=FALSE}
+#Gráfica de Línea
+HistoricoDeCasos <- readRDS("staying/HistoricoDeCasosHospitalizadas.rds") %>% 
+  mutate(labels = as.character(labels)) %>% 
+  rename(Total = Freq)
+CasosNuevos <- readRDS("staying/CasosNuevosHospitalizadas.rds") %>% 
+  mutate(labels = as.character(labels)) %>% 
+  rename(Nuevos = Freq) %>% 
+  filter(Nuevos > 0) %>% 
+  arrange(M)
+data <- left_join(CasosNuevos, HistoricoDeCasos, by = "labels") 
+data$labels <- factor(data$labels, levels = data[["labels"]])
+
+fig <- plot_ly(data)
+fig <- fig %>% 
+  add_trace(x = ~labels, y = ~Total, type = 'scatter', mode = 'lines', 
+            name = 'Casos acumulados por día',
+            marker = list(color = '#F29F05',
+                           line = list(color = '#FFFFFF', width = 0)),
+            line = list(color = '#F29F05'),
+            hoverinfo = "text",
+            text = ~Total, textposition = 'auto')
+fig <- fig %>% 
+  layout(yaxis = list(range = c(0, 20000))) %>% 
+  layout(title = '', xaxis = list(title = ""),
+         yaxis = list(side = 'left', title = '', showgrid = FALSE, zeroline = FALSE),
+         yaxis2 = list(side = 'right', overlaying = "y", title = '', showgrid = FALSE, zeroline = FALSE))
+fig <- fig %>% 
+  layout(legend = list(x = 0.1, y = 0.9))
+fig
+```
+
+Column {data-width=1280}
+-------------------------------------
+
+### Hospitalizados - Género
+
+```{r, fig.width=6, fig.height=5, echo=FALSE}
+# Pie
+data <- readRDS("staying/GenderHospitalizadas.rds")
+fig <- plot_ly(data, labels = ~labels, values = ~Freq,
+        marker = list(colors = c('#F29F05', '#F26666'), line = list(color = '#FFFFFF', width = 1))) %>%        
+        add_pie(hole = 0.6)
+fig
+```
+
+
+### Hospitalizados - Rango de edad
+
+```{r, fig.width=6, fig.height=5, echo=FALSE}
+#Gráficas de Barras
+data <- readRDS("staying/RangoEdadHospitalizadas.rds")
+data$labels <- factor(data$labels, levels = data[["labels"]])
+
+fig <- plot_ly(data, x = ~labels, y = ~Freq, type = "bar", 
+             text = ~Freq, textposition = 'outside',
+             marker = list(color = "#049DBF",
+                           line = list(color = '#FFFFFF', width = 1))) %>% 
+  layout(yaxis = list(range = c(0, 4000))) %>% 
+  layout(title = "",
+    xaxis = list(title = ""),
+    yaxis = list(title = ""))
+fig
+```
+
+
+
+
+
+
+
+
+
+
+En casa {data-navmenu="Lugar de atención"}
+=====================================
+
+Column {data-width=1280}
+-------------------------------------
+   
+### En casa - Casos por día
+
+```{r, fig.width=6, fig.height=5, echo=FALSE}
+#Gráfica de Barras
+HistoricoDeCasos <- readRDS("staying/HistoricoDeCasosCasa.rds") %>% 
+  mutate(labels = as.character(labels)) %>% 
+  rename(Total = Freq)
+CasosNuevos <- readRDS("staying/CasosNuevosCasa.rds") %>% 
+  mutate(labels = as.character(labels)) %>% 
+  rename(Nuevos = Freq) %>% 
+  filter(Nuevos > 0) %>% 
+  arrange(M)
+data <- left_join(CasosNuevos, HistoricoDeCasos, by = "labels") 
+data$labels <- factor(data$labels, levels = data[["labels"]])
+
+fig <- plot_ly(data)
+fig <- fig %>% 
+  add_trace(x = ~labels, y = ~Nuevos, type = 'bar', 
+            name = 'Casos nuevos por día',
+            marker = list(color = '#F26666',
+                           line = list(color = '#FFFFFF', width = 1)),
+            hoverinfo = "text",
+            text = ~Nuevos, textposition = 'outside')
+fig <- fig %>% 
+  layout(yaxis = list(range = c(0, 10000))) %>% 
+  layout(title = '', xaxis = list(title = ""),
+         yaxis = list(side = 'left', title = '', showgrid = FALSE, zeroline = FALSE),
+         yaxis2 = list(side = 'right', overlaying = "y", title = '', showgrid = FALSE, zeroline = FALSE))
+fig <- fig %>% 
+  layout(legend = list(x = 0.1, y = 0.9))
+fig
+```
+ 
+Column {data-width=1280}
+-------------------------------------
+
+### En casa - Casos acumulados por día
+
+```{r, fig.width=6, fig.height=5, echo=FALSE}
+#Gráfica de Línea
+HistoricoDeCasos <- readRDS("staying/HistoricoDeCasosCasa.rds") %>% 
+  mutate(labels = as.character(labels)) %>% 
+  rename(Total = Freq)
+CasosNuevos <- readRDS("staying/CasosNuevosCasa.rds") %>% 
+  mutate(labels = as.character(labels)) %>% 
+  rename(Nuevos = Freq) %>% 
+  filter(Nuevos > 0) %>% 
+  arrange(M)
+data <- left_join(CasosNuevos, HistoricoDeCasos, by = "labels") 
+data$labels <- factor(data$labels, levels = data[["labels"]])
+
+fig <- plot_ly(data)
+fig <- fig %>% 
+  add_trace(x = ~labels, y = ~Total, type = 'scatter', mode = 'lines', 
+            name = 'Casos acumulados por día',
+            marker = list(color = '#F29F05',
+                           line = list(color = '#FFFFFF', width = 0)),
+            line = list(color = '#F29F05'),
+            hoverinfo = "text",
+            text = ~Total, textposition = 'auto')
+fig <- fig %>% 
+  layout(yaxis = list(range = c(0, 100000))) %>% 
+  layout(title = '', xaxis = list(title = ""),
+         yaxis = list(side = 'left', title = '', showgrid = FALSE, zeroline = FALSE),
+         yaxis2 = list(side = 'right', overlaying = "y", title = '', showgrid = FALSE, zeroline = FALSE))
+fig <- fig %>% 
+  layout(legend = list(x = 0.1, y = 0.9))
+fig
+```
+
+Column {data-width=1280}
+-------------------------------------
+
+### En casa - Género
+
+```{r, fig.width=6, fig.height=5, echo=FALSE}
+# Pie
+data <- readRDS("staying/GenderCasa.rds")
+fig <- plot_ly(data, labels = ~labels, values = ~Freq,
+        marker = list(colors = c('#F29F05', '#F26666'), line = list(color = '#FFFFFF', width = 1))) %>%        
+        add_pie(hole = 0.6)
+fig
+```
+
+### En casa - Rango de edad
+
+```{r, fig.width=6, fig.height=5, echo=FALSE}
+#Gráficas de Barras
+data <- readRDS("staying/RangoEdadCasa.rds")
+data$labels <- factor(data$labels, levels = data[["labels"]])
+
+fig <- plot_ly(data, x = ~labels, y = ~Freq, type = "bar", 
+             text = ~Freq, textposition = 'outside',
+             marker = list(color = "#049DBF",
+                           line = list(color = '#FFFFFF', width = 1))) %>% 
+  layout(yaxis = list(range = c(0, 30000))) %>% 
+  layout(title = "",
+    xaxis = list(title = ""),
+    yaxis = list(title = ""))
+fig
+```
+
+
+
+
+
+
+
+
+
+
+
+Fallecidos
+=====================================
+
+Column {data-width=1280}
+-------------------------------------
+   
+### Fallecidos - Casos por día
+
+```{r, fig.width=6, fig.height=5, echo=FALSE}
+#Gráfica de Barras
+HistoricoDeCasos <- readRDS("staying/HistoricoDeCasosfallecidas.rds") %>% 
+  mutate(labels = as.character(labels)) %>% 
+  rename(Total = Freq)
+CasosNuevos <- readRDS("staying/CasosNuevosfallecidas.rds") %>% 
+  mutate(labels = as.character(labels)) %>% 
+  rename(Nuevos = Freq) %>% 
+  filter(Nuevos > 0) %>% 
+  arrange(M)
+data <- left_join(CasosNuevos, HistoricoDeCasos, by = "labels") 
+data$labels <- factor(data$labels, levels = data[["labels"]])
+
+fig <- plot_ly(data)
+fig <- fig %>% 
+  add_trace(x = ~labels, y = ~Nuevos, type = 'bar', 
+            name = 'Casos nuevos por día',
+            marker = list(color = '#F26666',
+                           line = list(color = '#FFFFFF', width = 1)),
+            hoverinfo = "text",
+            text = ~Nuevos, textposition = 'outside')
+fig <- fig %>% 
+  layout(yaxis = list(range = c(0, 1000))) %>% 
+  layout(title = '', xaxis = list(title = ""),
+         yaxis = list(side = 'left', title = '', showgrid = FALSE, zeroline = FALSE),
+         yaxis2 = list(side = 'right', overlaying = "y", title = '', showgrid = FALSE, zeroline = FALSE))
+fig <- fig %>% 
+  layout(legend = list(x = 0.1, y = 0.9))
+fig
+```
+ 
+Column {data-width=1280}
+-------------------------------------
+
+### Fallecidos - Casos acumulados por día
+
+```{r, fig.width=6, fig.height=5, echo=FALSE}
+#Gráfica de Línea
+HistoricoDeCasos <- readRDS("staying/HistoricoDeCasosfallecidas.rds") %>% 
+  mutate(labels = as.character(labels)) %>% 
+  rename(Total = Freq)
+CasosNuevos <- readRDS("staying/CasosNuevosfallecidas.rds") %>% 
+  mutate(labels = as.character(labels)) %>% 
+  rename(Nuevos = Freq) %>% 
+  filter(Nuevos > 0) %>% 
+  arrange(M)
+data <- left_join(CasosNuevos, HistoricoDeCasos, by = "labels") 
+data$labels <- factor(data$labels, levels = data[["labels"]])
+
+fig <- plot_ly(data)
+fig <- fig %>% 
+  add_trace(x = ~labels, y = ~Total, type = 'scatter', mode = 'lines', 
+            name = 'Casos acumulados por día',
+            marker = list(color = '#F29F05',
+                           line = list(color = '#FFFFFF', width = 0)),
+            line = list(color = '#F29F05'),
+            hoverinfo = "text",
+            text = ~Total, textposition = 'auto')
+fig <- fig %>% 
+  layout(yaxis = list(range = c(0, 10000))) %>% 
+  layout(title = '', xaxis = list(title = ""),
+         yaxis = list(side = 'left', title = '', showgrid = FALSE, zeroline = FALSE),
+         yaxis2 = list(side = 'right', overlaying = "y", title = '', showgrid = FALSE, zeroline = FALSE))
+fig <- fig %>% 
+  layout(legend = list(x = 0.1, y = 0.9))
+fig
+```
+
+Column {data-width=1280}
+-------------------------------------
+
+### Fallecidos - Ciudad o Departamento
+
+```{r, fig.width=6, fig.height=5, echo=FALSE}
+#Gráficas de Barras
+data <- readRDS("staying/FallecidosDepartamento.rds")
+data$Departamento <- factor(data$Departamento, levels = data[["Departamento"]])
+
+fig <- plot_ly(data, x = ~Departamento, y = ~Casos, type = "bar", 
+             text = ~Casos, textposition = 'outside',
+             marker = list(color = "#42A6C6",
+                           line = list(color = '#FFFFFF', width = 1))) %>% 
+  layout(yaxis = list(range = c(0, 6000))) %>% 
+  layout(title = "",
+    xaxis = list(title = ""),
+    yaxis = list(title = ""))
+fig
+```
+
+Column {data-width=1280}
+-------------------------------------
+
+### Fallecidos - Género
+
+```{r, fig.width=6, fig.height=5, echo=FALSE}
+# Pie
+data <- readRDS("staying/Genderfallecidas.rds")
+fig <- plot_ly(data, labels = ~labels, values = ~Freq,
+        marker = list(colors = c('#F29F05', '#F26666'), line = list(color = '#FFFFFF', width = 1))) %>%        
+        add_pie(hole = 0.6)
+fig
+```
+
+### Fallecidos - Rango de edad
+
+```{r, fig.width=6, fig.height=5, echo=FALSE}
+#Gráficas de Barras
+data <- readRDS("staying/RangoEdadfallecidas.rds")
+data$labels <- factor(data$labels, levels = data[["labels"]])
+
+fig <- plot_ly(data, x = ~labels, y = ~Freq, type = "bar", 
+             text = ~Freq, textposition = 'outside',
+             marker = list(color = "#049DBF",
+                           line = list(color = '#FFFFFF', width = 1))) %>% 
+  layout(yaxis = list(range = c(0, 6000))) %>% 
+  layout(title = "",
+    xaxis = list(title = ""),
+    yaxis = list(title = ""))
+fig
+```
+
+
+
+
+
+
+
+
+
+
+Casos en Bogotá
+===================================== 
+
+Column {data-width=100}
+-------------------------------------
+
+### Casos confirmados
+
+```{r, fig.width=2, fig.height=4, echo=FALSE}
+data <- readRDS("staying/CasosConfirmadosBog.rds") %>% 
+  select(Casos_Text)
+valueBox(data, color = "#ffffff")
+```
+
+### Casos recuperados
+
+```{r, fig.width=2, fig.height=4, echo=FALSE}
+data <- readRDS("staying/CasosRecuperadosBog.rds") %>% 
+  select(Recuperados_Text)
+valueBox(data, color = "#ffffff")
+```
+
+### Fallecidos
+
+```{r, fig.width=2, fig.height=4, echo=FALSE}
+data <- readRDS("staying/CasosFallecidosBog.rds") %>% 
+  select(Fallecidos)
+valueBox(data, color = "#ffffff")
+```
+
+### Casos activos
+
+```{r, fig.width=2, fig.height=4, echo=FALSE}
+Casos <- readRDS("staying/CasosConfirmadosBog.rds") %>% 
+  select(Casos)
+Recuperados <- readRDS("staying/CasosRecuperadosBog.rds") %>% 
+  select(Recuperados)
+Fallecidos <- readRDS("staying/CasosFallecidosBog.rds") %>% 
+  select(Fallecidos)
+data <- (Casos) - (Recuperados + Fallecidos)
+
+data <- data %>% 
+  mutate(a = substring(Casos, 1, 1)) %>% 
+  mutate(b = substring(Casos, 2, 2)) %>% 
+  mutate(c = substring(Casos, 3, 3)) %>% 
+  mutate(d = substring(Casos, 4, 4)) %>% 
+  mutate(e = substring(Casos, 5, 5)) %>% 
+  mutate(Casos_Text = paste0(a, ".", b, c, d, e)) %>% 
+  select(Casos_Text)
+valueBox(data, color = "#ffffff")
+```
+
+Column {data-width=1280}
+-------------------------------------
+
+### Localidad de residencia
+
+```{r, fig.width=6, fig.height=5, echo=FALSE}
+#Gráficas de Barras
+data <- readRDS("staying/LocalidadBog.rds")
+data$Localidad <- factor(data$Localidad, levels = data[["Localidad"]])
+
+fig <- plot_ly(data, x = ~Localidad, y = ~Casos, type = "bar", 
+             text = ~Casos, textposition = 'outside',
+             marker = list(color = "#42A6C6",
+                           line = list(color = '#FFFFFF', width = 1))) %>% 
+  layout(yaxis = list(range = c(0, 20000))) %>% 
+  layout(title = "",
+    xaxis = list(title = ""),
+    yaxis = list(title = ""))
+fig
+```
+
+Column {data-width=1280}
+-------------------------------------
+
+### Género en Bogotá
+
+```{r, fig.width=6, fig.height=5, echo=FALSE}
+# Pie
+data <- readRDS("staying/GenderBog.rds")
+fig <- plot_ly(data, labels = ~labels, values = ~Freq,
+        marker = list(colors = c('#F0B949', '#F56E47'), line = list(color = '#FFFFFF', width = 1))) %>%        
+        add_pie(hole = 0.6)
+fig
+```
+
+### Rango de edad en Bogotá
+
+```{r, fig.width=6, fig.height=5, echo=FALSE}
+#Gráficas de Barras
+data <- readRDS("staying/RangoEdadBog.rds")
+data$labels <- factor(data$labels, levels = data[["labels"]])
+
+fig <- plot_ly(data, x = ~labels, y = ~Freq, type = "bar", 
+             text = ~Freq, textposition = 'outside',
+             marker = list(color = "#42A6C6",
+                           line = list(color = '#FFFFFF', width = 1))) %>% 
+  layout(yaxis = list(range = c(0, 40000))) %>% 
+  layout(title = "",
+    xaxis = list(title = ""),
+    yaxis = list(title = ""))
+fig
+```
+
+Column {data-width=1280}
+-------------------------------------
+
+### Ubicación en Bogotá
+
+```{r, fig.width=6, fig.height=5, echo=FALSE}
+#Gráficas de Barras
+data <- readRDS("staying/UbicacionBog.rds")
+data$labels <- factor(data$labels, levels = data[["labels"]])
+
+fig <- plot_ly(data, x = ~labels, y = ~Freq, type = "bar", 
+             text = ~Freq, textposition = 'outside',
+             marker = list(color = "#42A6C6",
+                           line = list(color = '#FFFFFF', width = 1))) %>% 
+  layout(yaxis = list(range = c(0, 200000))) %>% 
+  layout(title = "",
+    xaxis = list(title = ""),
+    yaxis = list(title = ""))
+fig
+```
+
+### Estado en Bogotá
+
+```{r, fig.width=6, fig.height=5, echo=FALSE}
+#Gráficas de Barras
+data <- readRDS("staying/EstadoBog.rds")
+data$labels <- factor(data$labels, levels = data[["labels"]])
+
+fig <- plot_ly(data, x = ~labels, y = ~Freq, type = "bar", 
+             text = ~Freq, textposition = 'outside',
+             marker = list(color = "#42A6C6",
+                           line = list(color = '#FFFFFF', width = 1))) %>% 
+  layout(yaxis = list(range = c(0, 200000))) %>% 
+  layout(title = "",
+    xaxis = list(title = ""),
+    yaxis = list(title = ""))
+fig
+```
+
+Column {data-width=1280}
+-------------------------------------
+
+### Fallecidos por Localidad de residencia en Bogotá
+
+```{r, fig.width=6, fig.height=5, echo=FALSE}
+#Gráficas de Barras
+data <- readRDS("staying/LocalidadFallecidosBog.rds")
+data$Localidad <- factor(data$Localidad, levels = data[["Localidad"]])
+
+fig <- plot_ly(data, x = ~Localidad, y = ~Casos, type = "bar", 
+             text = ~Casos, textposition = 'outside',
+             marker = list(color = "#42A6C6",
+                           line = list(color = '#FFFFFF', width = 1))) %>% 
+  layout(yaxis = list(range = c(0, 1000))) %>% 
+  layout(title = "",
+    xaxis = list(title = ""),
+    yaxis = list(title = ""))
+fig
+```
+
+Column {data-width=1280}
+-------------------------------------
+
+### Fallecidos por Género en Bogotá
+
+```{r, fig.width=6, fig.height=5, echo=FALSE}
+# Pie
+data <- readRDS("staying/GenderFallecidosBog.rds")
+fig <- plot_ly(data, labels = ~labels, values = ~Freq,
+        marker = list(colors = c('#F0B949', '#F56E47'), line = list(color = '#FFFFFF', width = 1))) %>%        
+        add_pie(hole = 0.6)
+fig
+```
+
+### Fallecidos por Rango de edad en Bogotá
+
+```{r, fig.width=6, fig.height=5, echo=FALSE}
+#Gráficas de Barras
+data <- readRDS("staying/RangoEdadFallecidosBog.rds")
+data$labels <- factor(data$labels, levels = data[["labels"]])
+
+fig <- plot_ly(data, x = ~labels, y = ~Freq, type = "bar", 
+             text = ~Freq, textposition = 'outside',
+             marker = list(color = "#42A6C6",
+                           line = list(color = '#FFFFFF', width = 1))) %>% 
+  layout(yaxis = list(range = c(0, 1000))) %>% 
+  layout(title = "",
+    xaxis = list(title = ""),
+    yaxis = list(title = ""))
+fig
+```
+
+Column {data-width=1000}
+-------------------------------------
+
+<p><strong> Última Actualización: </strong> `r Sys.time()` Fuente: <a href="http://saludata.saludcapital.gov.co/osb/" target="_blank">Salud Capital</a> Nota: Este sitio web y sus contenidos se proporcionan al público con fines informativos. Se prohíbe el uso del sitio web con fines comerciales. Copyright 2020 <a href="https://peoplesvoice.co/" target="_blank">People’s Voice S.A.S. </a>

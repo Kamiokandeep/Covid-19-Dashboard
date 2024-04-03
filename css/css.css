@@ -1,0 +1,132 @@
+
+
+@media (max-width: 800px) {
+  
+      #section-1{
+        display: none;
+      }
+      
+      .contenedor{
+        width: 20px;
+        height: 124px;
+      }
+      
+      .img-fluid{
+        display:none;
+      }
+      
+      .value-box .value{
+        color: #000000 !important;
+        font-weight: 300 !important;
+      }
+      
+      .titulo{
+          font-size: 20px !important ;
+          font-weight: 100 !important;
+          top: 34%!important;
+          }
+    
+      .titulo-sub-titulo{
+          font-size: 18px !important;
+      }
+      
+      .float-left-principal-icon{
+          height: 40px !important;
+          width: 130px !important;
+          bottom: 0px !important;
+          right: 0px !important;
+      }
+}
+
+.contenedor{
+  display: flex;
+}
+
+.titulo{
+  position: absolute;
+  font-size: 45px;
+  color: #3e8fc1;
+  top: 40%;
+  left: 7%;
+  font-weight: 300 !important;
+}
+
+.titulo-sub-titulo{
+  position: absolute;
+  font-size: 40px;
+  top: 53%;
+  left: 7%;
+}
+
+.sub-titulo{
+  position: absolute;
+  top: 60%;
+  left: 7%;
+  color: #707070;
+}
+
+.parrafo{
+  position: absolute;
+  top: 66%;
+  left: 7%;
+  color: #707070;
+}
+
+/*! icon */
+.float-left-principal-icon{
+  position: absolute;
+  height: 100px;
+  width: 300px;
+  bottom: 45px;
+  right: 40px;
+  z-index: 1;
+}
+
+.float-left-sub-icon{
+  position: absolute;
+  height: 85px;
+  width: 85px;
+  top: 45px;
+  left: 189px;
+  z-index: 1;
+}
+
+/*! table */
+.chart-title {
+  border-bottom: 1px solid #d7d7d7;
+  color: #000;
+  background: rgb(255, 255, 255);
+  font-size: 16px;
+  font-weight: 400;
+  padding: 7px 10px 4px;
+}
+
+.header{
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.table.table-condensed{
+  font-size: 11px;
+  font-weight: 400;
+}
+
+/*! box */
+.value-box .value{
+  color: #000000;
+  font-weight: 400 !important;
+}
+
+/*! help */
+.modebar{
+display:none;
+}
+
+/*! naivar */
+.navbar-brand{
+  display:none;
+}
+
+.navbar-inverse .navbar-nav > li > a {
+    color: #000;
+}
